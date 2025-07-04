@@ -1,10 +1,9 @@
-const User = require("../models/User");
+const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 
-// REGISTER
 exports.registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -31,7 +30,6 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// LOGIN
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -60,55 +58,39 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// FORGOT PASSWORD
-exports.forgotPassword = async (req, res) => {
-  const { email } = req.body;
+// Get all users
 
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const token = crypto.randomBytes(32).toString("hex");
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
-    await user.save();
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-    const html = `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`;
-
-    await sendEmail(user.email, "Password Reset", html);
-
-    res.status(200).json({ message: "Password reset email sent" });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong", error: err.message });
-  }
+exports.getAllUsers = async (req, res) => {
+  const users = await User.find().select("-password");
+  res.json(users);
 };
 
-// RESET PASSWORD
-exports.resetPassword = async (req, res) => {
-  const { token } = req.params;
-  const { newPassword } = req.body;
+// Change user role
 
-  try {
-    const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() },
-    });
+exports.updateUserRole = async (req, res) => {
+  const { userId, role } = req.body;
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
-    await user.save();
-
-    res.status(200).json({ message: "Password reset successful" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+  if (!["user", "admin", "superadmin"].includes(role)) {
+    return res.status(400).json({ message: "Invalid role" });
   }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { role },
+    { new: true }
+  ).select("-password");
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  res.json({ message: "User role updated", user });
+};
+
+
+// Delete user
+
+exports.deleteUser = async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findByIdAndDelete(userId);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  res.json({ message: "User deleted" });
 };
