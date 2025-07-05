@@ -1,25 +1,66 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "./Navbar.css";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const navItems = [
+    { label: "Posts", route: "/posts" },
+    { label: "New Post", route: "/createpost" },
+    { label: "Dashboard", route: "/dashboard" },
+    { label: "MyProfile", route: "/myprofile" },
+  ];
+
+  const handleNavigate = (route) => {
+    navigate(route);
+    setMenuOpen(false);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
+    setMenuOpen(false);
   };
 
   return (
-    <nav className="flex justify-between items-center p-4 bg-gray-800 text-white">
-      <div className="flex gap-4">
-        <Link to="/dashboard">Dashboard</Link>
-      </div>
-      <button
-        onClick={handleLogout}
-        className="bg-red-500 px-4 py-1 rounded hover:bg-red-600"
+    <nav className="navbar">
+      <div
+        className="navbar-brand"
+        onClick={() => handleNavigate("/dashboard")}
       >
-        Logout
-      </button>
+        MS BLOG
+      </div>
+
+      <div className={`navbar-links ${menuOpen ? "open" : ""}`}>
+        {navItems.map((item, index) => (
+          <div
+            key={index}
+            className={`nav-link ${
+              location.pathname === item.route ? "active" : ""
+            }`}
+            onClick={() => handleNavigate(item.route)}
+          >
+            {item.label}
+          </div>
+        ))}
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+
+      <div
+        className={`menu-toggle ${menuOpen ? "open" : ""}`}
+        onClick={() => setMenuOpen(!menuOpen)}
+      >
+        <div className="bar"></div>
+        <div className="bar"></div>
+        <div className="bar"></div>
+      </div>
     </nav>
   );
 };
+
 export default Navbar;

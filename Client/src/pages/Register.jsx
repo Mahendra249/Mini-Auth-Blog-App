@@ -1,5 +1,9 @@
 import { useState } from "react";
-import "../styles/Register.css"
+import "../styles/Register.css";
+import { postData } from "../api/ClientFunction";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -9,59 +13,28 @@ export default function Register() {
   const [msgType, setMsgType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const navigate = useNavigate();
+
+  const handleRegister = async () => {
     setIsLoading(true);
+    const payload = {
+      name,
+      email,
+      password,
+    };
 
-    try {
-      // Validate password confirmation
-      if (password !== confirmPassword) {
-        throw new Error("Passwords do not match");
-      }
+    console.log("Register payload:", payload);
 
-      // Validate required fields
-      if (!name || !email || !password) {
-        throw new Error("Please fill in all fields");
-      }
-
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Simulate register logic
-      if (name && email && password) {
-        // Store in React state instead of localStorage
-        setMsg("Registered successfully! Redirecting...");
-        setMsgType("success");
-
-        // Simulate redirect after 2 seconds
-        setTimeout(() => {
-          setMsg("Redirected to dashboard");
-          setMsgType("success");
-        }, 2000);
-      } else {
-        throw new Error("Registration failed");
-      }
-    } catch (error) {
-      setMsg(error.message || "Registration failed. Please try again.");
-      setMsgType("error");
-    } finally {
-      setIsLoading(false);
-
-      // Hide message after 5 seconds
-      setTimeout(() => {
-        setMsg("");
-        setMsgType("");
-      }, 5000);
+    const response = await postData("/auth/register", payload);
+    if (response?.success) {
+      console.log("done done dana done");
+      localStorage.setItem("token", response?.token);
+      toast.success(response?.msg || "user registered successfuly");
+      navigate("/dashboard");
+    } else {
+      toast.error(response?.msg || "Registration failed");
     }
-  };
-
-  const handleLoginRedirect = () => {
-    setMsg("Redirecting to login page...");
-    setMsgType("success");
-    setTimeout(() => {
-      setMsg("");
-      setMsgType("");
-    }, 3000);
+    setIsLoading(false);
   };
 
   return (
@@ -165,13 +138,7 @@ export default function Register() {
 
         <div className="login-redirect">
           <p>Already have an account?</p>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              handleLoginRedirect();
-            }}
-          >
+          <a href="#" onClick={() => navigate("/login")}>
             Sign In
           </a>
         </div>

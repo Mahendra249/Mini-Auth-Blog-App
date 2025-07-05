@@ -1,79 +1,371 @@
-import { useEffect, useState } from "react";
-import axios from "../utils/axios";
-import PostCard from "../components/PostCard/PostCard";
+import React, { useState, useEffect } from "react";
+import {
+  Edit3,
+  Trash2,
+  Plus,
+  User,
+  Calendar,
+  Eye,
+  Save,
+  X,
+} from "lucide-react";
+import "../styles/Dashboard.css";
 import Navbar from "../components/Navbar/Navbar";
 
-export default function Dashboard() {
-  const [posts, setPosts] = useState([]);
-  const [msg, setMsg] = useState("");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  
-  // Fetch posts
-  const fetchPosts = async () => {
-    try {
-      const res = await axios.get("/posts/getallpost");
-      setPosts(res.data.posts);
-    } catch (err) {
-      setMsg(err.response?.data?.message || "Failed to load posts");
+const Dashboard = () => {
+  const [posts, setPosts] = useState([
+    {
+      id: 1,
+      title: "Getting Started with React",
+      content:
+        "React is a powerful JavaScript library for building user interfaces. It allows developers to create reusable UI components and manage application state efficiently.",
+      author: "John Doe",
+      date: "2024-01-15",
+      status: "published",
+      views: 1250,
+    },
+    {
+      id: 2,
+      title: "Advanced CSS Techniques",
+      content:
+        "Modern CSS offers incredible capabilities for creating stunning layouts and animations. From Grid to Flexbox, these tools revolutionize web design.",
+      author: "Jane Smith",
+      date: "2024-01-10",
+      status: "draft",
+      views: 890,
+    },
+    {
+      id: 3,
+      title: "JavaScript ES6 Features",
+      content:
+        "ES6 introduced many powerful features that make JavaScript more expressive and easier to work with. Arrow functions, destructuring, and modules are game-changers.",
+      author: "Mike Johnson",
+      date: "2024-01-05",
+      status: "published",
+      views: 2100,
+    },
+  ]);
+
+  const [currentUser, setCurrentUser] = useState({
+    name: "John Doe",
+    role: "admin", // Can be: "admin", "editor", "author", "viewer"
+  });
+
+  const [editingPost, setEditingPost] = useState(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    status: "draft",
+  });
+
+  const [filter, setFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("date");
+
+  // Permission checks
+  const canCreate = () =>
+    ["admin", "editor", "author"].includes(currentUser.role);
+  const canEdit = (post) => {
+    if (currentUser.role === "admin") return true;
+    if (currentUser.role === "editor") return true;
+    if (currentUser.role === "author" && post.author === currentUser.name)
+      return true;
+    return false;
+  };
+  const canDelete = (post) => {
+    if (currentUser.role === "admin") return true;
+    if (currentUser.role === "editor") return true;
+    if (currentUser.role === "author" && post.author === currentUser.name)
+      return true;
+    return false;
+  };
+
+  // Filter and sort posts
+  const filteredPosts = posts
+    .filter((post) => {
+      if (filter === "all") return true;
+      if (filter === "published") return post.status === "published";
+      if (filter === "draft") return post.status === "draft";
+      if (filter === "my-posts") return post.author === currentUser.name;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "date") return new Date(b.date) - new Date(a.date);
+      if (sortBy === "title") return a.title.localeCompare(b.title);
+      if (sortBy === "views") return b.views - a.views;
+      return 0;
+    });
+
+  const handleCreatePost = () => {
+    if (!newPost.title.trim() || !newPost.content.trim()) return;
+
+    const post = {
+      id: Date.now(),
+      title: newPost.title,
+      content: newPost.content,
+      author: currentUser.name,
+      date: new Date().toISOString().split("T")[0],
+      status: newPost.status,
+      views: 0,
+    };
+
+    setPosts([...posts, post]);
+    setNewPost({ title: "", content: "", status: "draft" });
+    setShowCreateForm(false);
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPost({ ...post });
+  };
+
+  const handleUpdatePost = () => {
+    setPosts(
+      posts.map((post) => (post.id === editingPost.id ? editingPost : post))
+    );
+    setEditingPost(null);
+  };
+
+  const handleDeletePost = (postId) => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      setPosts(posts.filter((post) => post.id !== postId));
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  // Create post
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post("/posts/createpost", { title, content });
-      setTitle("");
-      setContent("");
-      setMsg("Post created successfully!");
-      fetchPosts(); // refresh list
-    } catch (err) {
-      setMsg(err.response?.data?.message || "Failed to create post");
-    }
+  const switchUser = (role) => {
+    setCurrentUser({ ...currentUser, role });
+    setEditingPost(null);
+    setShowCreateForm(false);
   };
 
   return (
-    <div>
-      <Navbar />
+    <div className="dashboard">
+      {/* Header */}
+      <Navbar/>
 
-      <div className="max-w-2xl mx-auto p-4">
-        <h2 className="text-2xl font-bold mb-4">Create a New Post</h2>
-        <form onSubmit={handleCreatePost}>
-          <input
-            type="text"
-            placeholder="Title"
-            className="w-full mb-3 p-2 border rounded"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <textarea
-            placeholder="Content"
-            className="w-full mb-3 p-2 border rounded"
-            rows="4"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          ></textarea>
-          <button
-            type="submit"
-            className="w-full p-2 bg-blue-600 text-white rounded"
-          >
-            Create Post
-          </button>
-        </form>
-        {msg && <p className="mt-3 text-green-600">{msg}</p>}
+      <div className="main-content">
+        {/* Controls */}
+        <div className="controls">
+          <div className="filters">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All Posts</option>
+              <option value="published">Published</option>
+              <option value="draft">Drafts</option>
+              <option value="my-posts">My Posts</option>
+            </select>
 
-        <h2 className="text-xl font-bold mt-10 mb-4">All Posts</h2>
-        {posts.length > 0 ? (
-          posts.map((post) => <PostCard key={post._id} post={post} />)
-        ) : (
-          <p>No posts yet.</p>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="sort-select"
+            >
+              <option value="date">Sort by Date</option>
+              <option value="title">Sort by Title</option>
+              <option value="views">Sort by Views</option>
+            </select>
+          </div>
+
+          {canCreate() && (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="create-btn"
+            >
+              <Plus size={16} />
+              Create Post
+            </button>
+          )}
+        </div>
+
+        {/* Create Post Form */}
+        {showCreateForm && (
+          <div className="create-form">
+            <h3 className="form-title">Create New Post</h3>
+
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="Post Title"
+                value={newPost.title}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, title: e.target.value })
+                }
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <textarea
+                placeholder="Post Content"
+                value={newPost.content}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, content: e.target.value })
+                }
+                rows={6}
+                className="form-textarea"
+              />
+            </div>
+
+            <div className="form-actions">
+              <select
+                value={newPost.status}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, status: e.target.value })
+                }
+                className="status-select"
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+
+              <button onClick={handleCreatePost} className="btn btn-success">
+                Create Post
+              </button>
+
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Posts Grid */}
+        <div className="posts-grid">
+          {filteredPosts.map((post) => (
+            <div key={post.id} className="post-card">
+              {editingPost && editingPost.id === post.id ? (
+                // Edit Form
+                <div className="edit-form">
+                  <input
+                    type="text"
+                    value={editingPost.title}
+                    onChange={(e) =>
+                      setEditingPost({ ...editingPost, title: e.target.value })
+                    }
+                    className="edit-title"
+                  />
+
+                  <textarea
+                    value={editingPost.content}
+                    onChange={(e) =>
+                      setEditingPost({
+                        ...editingPost,
+                        content: e.target.value,
+                      })
+                    }
+                    rows={4}
+                    className="edit-content"
+                  />
+
+                  <div className="edit-status">
+                    <select
+                      value={editingPost.status}
+                      onChange={(e) =>
+                        setEditingPost({
+                          ...editingPost,
+                          status: e.target.value,
+                        })
+                      }
+                      className="edit-status-select"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
+                  </div>
+
+                  <div className="edit-actions">
+                    <button
+                      onClick={handleUpdatePost}
+                      className="btn btn-success btn-sm"
+                    >
+                      <Save size={16} />
+                      Save
+                    </button>
+
+                    <button
+                      onClick={() => setEditingPost(null)}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      <X size={16} />
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // Display Post
+                <>
+                  <div className="post-content">
+                    <div className="post-header">
+                      <h3 className="post-title">{post.title}</h3>
+                      <span className={`status-badge status-${post.status}`}>
+                        {post.status}
+                      </span>
+                    </div>
+
+                    <p className="post-excerpt">
+                      {post.content.substring(0, 150)}...
+                    </p>
+
+                    <div className="post-meta">
+                      <span className="meta-item">
+                        <User size={14} />
+                        {post.author}
+                      </span>
+                      <span className="meta-item">
+                        <Calendar size={14} />
+                        {post.date}
+                      </span>
+                      <span className="meta-item">
+                        <Eye size={14} />
+                        {post.views}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  {(canEdit(post) || canDelete(post)) && (
+                    <div className="post-actions">
+                      {canEdit(post) && (
+                        <button
+                          onClick={() => handleEditPost(post)}
+                          className="btn btn-primary btn-sm"
+                        >
+                          <Edit3 size={14} />
+                          Edit
+                        </button>
+                      )}
+
+                      {canDelete(post) && (
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="btn btn-danger btn-sm"
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {filteredPosts.length === 0 && (
+          <div className="empty-state">
+            <h3>No posts found</h3>
+            <p>Try adjusting your filters or create a new post.</p>
+          </div>
         )}
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

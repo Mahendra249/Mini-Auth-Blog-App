@@ -1,51 +1,34 @@
 import { useState } from "react";
 import "../styles/Login.css";
+import { useNavigate } from "react-router-dom";
+import { postData } from "../api/ClientFunction";
+import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [msg, setMsg] = useState("");
-  const [msgType, setMsgType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const navigate = useNavigate();
+  const {setUser} = useAuth();
   const handleLogin = async (e) => {
     e.preventDefault();
+
     setIsLoading(true);
+    const payload = { email, password };
+    console.log("Login payload:", payload);
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      if (email && password) {
-        setMsg("Login successful! Redirecting...");
-        setMsgType("success");
-
-        setTimeout(() => {
-          setMsg("Redirected to dashboard");
-          setMsgType("success");
-        }, 2000);
-      } else {
-        throw new Error("Please fill in all fields");
-      }
-    } catch (error) {
-      setMsg(error.message || "Login failed. Please try again.");
-      setMsgType("error");
-    } finally {
-      setIsLoading(false);
-
-      setTimeout(() => {
-        setMsg("");
-        setMsgType("");
-      }, 5000);
+    const response = await postData("/auth/login", payload);
+     
+    if (response?.success) {
+      setUser(response?.user);
+      localStorage.setItem("token", response.token);
+      toast.success(response.msg || "User logged in successfully");
+      navigate("/dashboard");
+    } else {
+      toast.error(response.msg || "Login failed");
     }
-  };
-
-  const handleForgotPassword = () => {
-    setMsg("Forgot password functionality would be implemented here");
-    setMsgType("success");
-    setTimeout(() => {
-      setMsg("");
-      setMsgType("");
-    }, 5000);
+    setIsLoading(false);
   };
 
   return (
@@ -85,11 +68,7 @@ export default function Login() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="login-btn"
-            disabled={isLoading}
-          >
+          <button type="submit" className="login-btn" disabled={isLoading}>
             <span className={`btn-text ${isLoading ? "hidden" : ""}`}>
               Login
             </span>
@@ -98,21 +77,11 @@ export default function Login() {
         </form>
 
         <div className="forgot-password">
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              handleForgotPassword();
-            }}
-          >
-            Forgot Password?
+          <a href="#" onClick={() => navigate("/register")}>
+            Don't have an account? Register
           </a>
         </div>
-
-        {msg && <div className={`message ${msgType}`}>{msg}</div>}
       </div>
     </div>
   );
 }
-
-      

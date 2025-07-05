@@ -1,0 +1,50 @@
+[
+  {
+    "title": "The Future of Web Development: What's Next in 2025",
+    "excerpt": "Exploring the latest trends and technologies...",
+    "content": "In this post, we explore the upcoming trends in web development, including AI-driven interfaces, WebAssembly, and more, preparing developers for the future.",
+    "author": "Alex Johnson",
+    "date": { "$date": "2025-01-15T00:00:00Z" },
+    "category": "Technology"
+  },
+  {
+    "title": "Mastering React Hooks: A Complete Guide",
+    "excerpt": "Deep dive into React Hooks...",
+    "content": "This comprehensive guide walks through useState, useEffect, custom hooks, and best practices for building scalable React applications.",
+    "author": "Sarah Chen",
+    "date": { "$date": "2025-01-12T00:00:00Z" },
+    "category": "React"
+  },
+  {
+    "title": "CSS Grid vs Flexbox: When to Use Which",
+    "excerpt": "Understanding the differences...",
+    "content": "We compare CSS Grid and Flexbox, highlighting their strengths and best use cases so you can choose the right layout system for your next project.",
+    "author": "Mike Rodriguez",
+    "date": { "$date": "2025-01-10T00:00:00Z" },
+    "category": "CSS"
+  },
+  {
+    "title": "Building Scalable APIs with Node.js",
+    "excerpt": "Learn how to create robust...",
+    "content": "Discover how to design RESTful APIs with Express, integrate middleware, and apply performance optimizations for scalable Node.js backends.",
+    "author": "Emma Wilson",
+    "date": { "$date": "2025-01-08T00:00:00Z" },
+    "category": "Backend"
+  },
+  {
+    "title": "The Psychology of UX Design",
+    "excerpt": "How understanding human psychology...",
+    "content": "By understanding user behavior and cognitive psychology, you can craft interfaces that delight users and drive engagement.",
+    "author": "David Kim",
+    "date": { "$date": "2025-01-05T00:00:00Z" },
+    "category": "Design"
+  },
+  {
+    "title": "Deploying React Apps: Best Practices",
+    "excerpt": "Complete guide to deploying...",
+    "content": "This article details deployment strategies for React apps, from static site hosting to containerized environments using Docker and CI/CD pipelines.",
+    "author": "Lisa Park",
+    "date": { "$date": "2025-01-03T00:00:00Z" },
+    "category": "React"
+  }
+]
