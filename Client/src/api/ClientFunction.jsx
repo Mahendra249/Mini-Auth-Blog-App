@@ -1,5 +1,5 @@
 import axios from "axios";
-export const baseURL = "http://localhost:5000/api";
+export const baseURL = "https://mini-blog-backend-production-8deb.up.railway.app/api";
 if (!baseURL) {
   console.log(
     "> BaseURL error, please check your env file or visit api/ClientFunction.jsx file to see more details..., Thanks!..."
